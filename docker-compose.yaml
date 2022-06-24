@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  shopping_list:
+    image: egordockerhub/shoppinglist:v2
+    volumes:
+      - ./database:/app/database

@@ -2,10 +2,10 @@ from flask import Flask, request
 import telebot
 from telebot import types
 import sqlite3
+from secrets import token
 
-token = '5416818528:AAGSk-mLoa9Qj2HFXUkGX9esUaYWoKwBRt8'
 bot = telebot.TeleBot(token)
-name_of_db = 'sqlite_python'
+path_to_db = './database/sqlite_python'
 app = Flask(__name__)
 
 
@@ -146,17 +146,17 @@ def start(message):
     bot_json_message = f"{message.json}"
     bot.send_message(message.chat.id, bot_message, parse_mode='html')
     bot.send_message(message.chat.id, bot_json_message, parse_mode='html')
-    create_or_connect_to_database(message.chat.id, name_of_db)
+    create_or_connect_to_database(message.chat.id, path_to_db)
 
 
 @bot.message_handler(commands=["newtable"])
 def create_new_table(message):
-    create_new_table_at_database(message.chat.id, name_of_db)
+    create_new_table_at_database(message.chat.id, path_to_db)
 
 
 @bot.message_handler(commands=['list'])
 def shopping_list(message):
-    shoppinglist = get_list(message.chat.id, name_of_db, message.from_user.id)
+    shoppinglist = get_list(message.chat.id, path_to_db, message.from_user.id)
     keyboard = types.InlineKeyboardMarkup()
     for item in shoppinglist:
         keyboard.add(types.InlineKeyboardButton(f'{item[1]} - {item[2]} {item[3]}.', callback_data=f'{item[0]}'))
@@ -178,13 +178,13 @@ def commands(message):
 
 @bot.message_handler(commands=['clean'])
 def clean_the_shoppinglist(message):
-    delete_list(message.chat.id, name_of_db, message.from_user.id)
+    delete_list(message.chat.id, path_to_db, message.from_user.id)
 
 
 @bot.callback_query_handler(func=lambda callback: True and callback.data.split(" ")[0] == 'delete')
 def delete_item(callback):
     bot.answer_callback_query(callback.id)
-    delete_item_from_database(callback.message.chat.id, name_of_db, callback.data.split(" ")[1])
+    delete_item_from_database(callback.message.chat.id, path_to_db, callback.data.split(" ")[1])
 
 
 @bot.callback_query_handler(func=lambda callback: True and (
@@ -193,7 +193,7 @@ def change_data_item(callback):
     bot.answer_callback_query(callback.id)
     parameter = callback.data.split(" ")[0].split("_")[1]
     data = bot.send_message(callback.message.chat.id, f'{parameter}', parse_mode='html')
-    bot.register_next_step_handler(data, change_data_param_item, callback.message.chat.id, name_of_db,
+    bot.register_next_step_handler(data, change_data_param_item, callback.message.chat.id, path_to_db,
                                    callback.data.split(" ")[1], parameter)
 
 
@@ -226,7 +226,7 @@ def add_item_to_database(message):
                     'amount': item.split(' ')[1],
                     'dimension': item.split(' ')[2],
                     'user_id': message.from_user.id}
-                add_new_item(message.chat.id, name_of_db, item_param)
+                add_new_item(message.chat.id, path_to_db, item_param)
             except Exception:
                 bot.send_message(message.chat.id, f"Проверьте правильность составленного списка!", parse_mode='html')
         else:
